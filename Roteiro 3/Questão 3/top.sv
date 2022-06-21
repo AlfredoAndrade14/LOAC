@@ -33,11 +33,83 @@ module top(input  logic clk_2,
   // atribuição das entradas
   always_comb seletor <= SWI[4:3];
 
+  //definição das representações do numeros no display
+  parameter NUMERO_0 = 'b00111111;
+  parameter NUMERO_1 = 'b00000110;
+  parameter NUMERO_2 = 'b01011011;
+  parameter NUMERO_3 = 'b01001111;
+  parameter NUMERO_n1 = 'b10000110;
+  parameter NUMERO_n2 = 'b11011011;
+  parameter NUMERO_n3 = 'b11001111;
+  parameter NUMERO_n4 = 'b11100110;
+  logic [2:0] resultado;
+  
   always_comb begin
-    if(seletor == 'b00);
-    else if(seletor == 'b01);
-    else if(seletor == 'b10);
-    else;
+    LED[7:0] <= 'b00000000;
+    SEG[7:0] <= 'b00000000;
+
+    /*Seletor da operação AND realiza a operação
+      e atribui ao led o resultado da operação
+    */
+    if(seletor == 'b00) begin
+      resultado <= valA & valB;
+      LED[2:0] <= resultado;
+    end
+
+    /*Seletor da operação OR realiza a operação
+      e atribui ao led o resultado da operação
+    */
+    else if(seletor == 'b01) begin
+      resultado <= valA | valB;
+      LED[2:0] <= resultado;
+    end
+    
+    /*Seletor da operação de Soma realiza a operação
+      atribui ao led o resultado da operação, verifica
+      os casos de underflow e overflow, caso aconteça
+      liga o LED 7
+    */
+    else if(seletor == 'b10) begin
+      resultado <= valA + valB;
+      if(valA >= 4 && valB >= 4) LED[7] <= 1;
+      else if(valA == 3 && valB < 4 && valB > 0) LED[7] <= 1;
+      else if(valB == 3 && valA < 4 && valA > 0) LED[7] <= 1;
+      else if(valA == 2 && valB == 2) LED[7] <= 1;
+      else LED[7] <= 0;
+      LED[2:0] <= resultado;
+    end
+
+    /*Seletor da operação de Subtração realiza a operação
+      atribui ao led o resultado da operação, verifica
+      os casos de underflow e overflow, caso aconteça
+      liga o LED 7
+    */
+    else begin
+     resultado <= valA - valB;
+     if(valA == 4 && valB < 4 && valB > 0) LED[7] <= 1;
+     else if(valA == 5 && valB <= 3 && valB > 1) LED[7] <= 1;
+     else if(valA == 6 && valB == 3 && valB > 2) LED[7] <= 1;
+     else if(valA == 3 && valB >= 4) LED[7] <= 1;
+     else if(valA == 2 && valB >= 4 && valB < 6) LED[7] <= 1;
+     else if(valA == 1 && valB >= 4 && valB < 5) LED[7] <= 1;
+     else LED[7] <= 0;
+     LED[2:0] <= resultado;
+    end
+
+    /* Verifica se houve underflow ou overflow, caso não tenha
+      acontecido coloca no display o numero em decimal
+    */
+    if(LED[7] == 0) begin
+      if(resultado == 'b000) SEG <= NUMERO_0;
+      else if(resultado == 'b001) SEG <= NUMERO_1;
+      else if(resultado == 'b010) SEG <= NUMERO_2;
+      else if(resultado == 'b011) SEG <= NUMERO_3;
+      else if(resultado == 'b111) SEG <= NUMERO_n1;
+      else if(resultado == 'b110) SEG <= NUMERO_n2;
+      else if(resultado == 'b101) SEG <= NUMERO_n3;
+      else if(resultado == 'b100) SEG <= NUMERO_n4;
+    end
+    else SEG <= 0;
   end
 
 endmodule
